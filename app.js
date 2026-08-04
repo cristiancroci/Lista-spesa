@@ -16,7 +16,7 @@ function saveList() {
 
 async function initDetector() {
   if (!('BarcodeDetector' in window)) {
-    alert("Il browser non supporta BarcodeDetector. Usa Chrome.");
+    alert("Il tuo browser non supporta BarcodeDetector. Usa Chrome.");
     return null;
   }
   return new BarcodeDetector({
@@ -53,9 +53,12 @@ window.removeItem = code => {
 
 async function scanLoop() {
   if (!scanning || !detector) return;
+
   const barcodes = await detector.detect(video);
+
   if (barcodes.length > 0) {
     const code = barcodes[0].rawValue;
+
     if (!items.find(i => i.code === code)) {
       items.push({ code, name:'' });
       saveList();
@@ -63,6 +66,7 @@ async function scanLoop() {
       navigator.vibrate?.(100);
     }
   }
+
   requestAnimationFrame(scanLoop);
 }
 
@@ -72,8 +76,10 @@ scanBtn.addEventListener('click', async () => {
     scanBtn.textContent = "Scansiona codice";
     return;
   }
+
   detector = await initDetector();
   if (!detector) return;
+
   await startCamera();
   scanning = true;
   scanBtn.textContent = "Ferma scansione";
