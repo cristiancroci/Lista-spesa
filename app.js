@@ -26,9 +26,20 @@ async function initDetector() {
 
 async function startCamera() {
   stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'environment' }
+    video: {
+      facingMode: 'environment',
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    }
   });
   video.srcObject = stream;
+
+  // Aspetta che il video sia pronto
+  await new Promise(resolve => {
+    video.onloadedmetadata = () => resolve();
+  });
+
+  await video.play();
 }
 
 function stopCamera() {
@@ -54,17 +65,21 @@ window.removeItem = code => {
 async function scanLoop() {
   if (!scanning || !detector) return;
 
-  const barcodes = await detector.detect(video);
+  try {
+    const barcodes = await detector.detect(video);
 
-  if (barcodes.length > 0) {
-    const code = barcodes[0].rawValue;
+    if (barcodes.length > 0) {
+      const code = barcodes[0].rawValue;
 
-    if (!items.find(i => i.code === code)) {
-      items.push({ code, name:'' });
-      saveList();
-      renderList();
-      navigator.vibrate?.(100);
+      if (!items.find(i => i.code === code)) {
+        items.push({ code, name:'' });
+        saveList();
+        renderList();
+        navigator.vibrate?.(100);
+      }
     }
+  } catch (e) {
+    console.error("Errore detector:", e);
   }
 
   requestAnimationFrame(scanLoop);
