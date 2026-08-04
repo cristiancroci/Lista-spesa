@@ -6,6 +6,7 @@
   <title>Lista Spesa Scanner</title>
 
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -13,11 +14,17 @@
 
   <button id="scanBtn">Scansiona codice</button>
 
-  <!-- QUESTO È FONDAMENTALE -->
-  <video id="video" autoplay playsinline style="width:100%; max-width:400px;"></video>
+  <video id="video" autoplay playsinline></video>
 
   <div id="list"></div>
 
+  <div id="toast" class="toast"></div>
+
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
 </body>
 </html>
