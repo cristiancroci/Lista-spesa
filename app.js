@@ -35,7 +35,6 @@ async function startCamera() {
 
   video.srcObject = stream;
 
-  // FIX per Samsung S24 Ultra
   video.setAttribute("playsinline", true);
   video.setAttribute("webkit-playsinline", true);
 
@@ -54,7 +53,11 @@ function stopCamera() {
 function renderList() {
   list.innerHTML = items.map(i =>
     `<div class="item">
-       <span>${i.name || 'Prodotto'}<br><span class="code">${i.code}</span></span>
+       <span>
+         <strong>${i.name || 'Prodotto'}</strong><br>
+         <span class="code">${i.code}</span>
+       </span>
+       ${i.image ? `<img src="${i.image}" style="width:50px;border-radius:8px;">` : ""}
        <button onclick="removeItem('${i.code}')">✕</button>
      </div>`
   ).join('');
@@ -66,6 +69,24 @@ window.removeItem = code => {
   renderList();
 };
 
+async function fetchProductDetails(code) {
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+    const data = await res.json();
+
+    if (data.status === 1) {
+      return {
+        name: data.product.product_name || "Prodotto",
+        image: data.product.image_small_url || null
+      };
+    }
+  } catch (e) {
+    console.error("Errore API:", e);
+  }
+
+  return { name: "Prodotto", image: null };
+}
+
 async function scanLoop() {
   if (!scanning || !detector) return;
 
@@ -76,7 +97,15 @@ async function scanLoop() {
       const code = barcodes[0].rawValue;
 
       if (!items.find(i => i.code === code)) {
-        items.push({ code, name:'' });
+
+        const details = await fetchProductDetails(code);
+
+        items.push({
+          code,
+          name: details.name,
+          image: details.image
+        });
+
         saveList();
         renderList();
         navigator.vibrate?.(100);
