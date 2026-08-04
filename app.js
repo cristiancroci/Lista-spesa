@@ -32,9 +32,13 @@ async function startCamera() {
       height: { ideal: 720 }
     }
   });
+
   video.srcObject = stream;
 
-  // Aspetta che il video sia pronto
+  // FIX per Samsung S24 Ultra
+  video.setAttribute("playsinline", true);
+  video.setAttribute("webkit-playsinline", true);
+
   await new Promise(resolve => {
     video.onloadedmetadata = () => resolve();
   });
