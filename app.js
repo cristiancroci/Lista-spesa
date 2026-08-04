@@ -1,17 +1,34 @@
 const scanBtn = document.getElementById('scanBtn');
 const video = document.getElementById('video');
 const list = document.getElementById('list');
+const toast = document.getElementById('toast');
 
 let stream = null;
 let scanning = false;
 let detector = null;
 
-// Carica lista salvata
+// Database interno prodotti casa
+const customProducts = [
+  { code: "8001234567890", name: "Sacchetti gelo", image: null },
+  { code: "8009876543210", name: "Alcool denaturato", image: null },
+  { code: "8011111111111", name: "Pellicola trasparente", image: null },
+  { code: "8022222222222", name: "Carta forno", image: null },
+  { code: "8033333333333", name: "Spugne cucina", image: null },
+  { code: "8044444444444", name: "Detersivo piatti", image: null }
+];
+
+// Lista salvata
 let items = JSON.parse(localStorage.getItem("listaSpesa") || "[]");
 renderList();
 
 function saveList() {
   localStorage.setItem("listaSpesa", JSON.stringify(items));
+}
+
+function showToast(text) {
+  toast.textContent = text;
+  toast.style.opacity = 1;
+  setTimeout(() => toast.style.opacity = 0, 2000);
 }
 
 async function initDetector() {
@@ -28,8 +45,8 @@ async function startCamera() {
   stream = await navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: 'environment',
-      width: { ideal: 1280 },
-      height: { ideal: 720 }
+      width: { ideal: 640 },
+      height: { ideal: 480 }
     }
   });
 
@@ -57,7 +74,7 @@ function renderList() {
          <strong>${i.name || 'Prodotto'}</strong><br>
          <span class="code">${i.code}</span>
        </span>
-       ${i.image ? `<img src="${i.image}" style="width:50px;border-radius:8px;">` : ""}
+       ${i.image ? `<img src="${i.image}">` : ""}
        <button onclick="removeItem('${i.code}')">✕</button>
      </div>`
   ).join('');
@@ -69,7 +86,21 @@ window.removeItem = code => {
   renderList();
 };
 
+function findCustomProduct(code) {
+  return customProducts.find(p => p.code === code) || null;
+}
+
 async function fetchProductDetails(code) {
+  // 1) Database interno
+  const local = findCustomProduct(code);
+  if (local) {
+    return {
+      name: local.name,
+      image: local.image
+    };
+  }
+
+  // 2) OpenFoodFacts (alimentari)
   try {
     const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
     const data = await res.json();
@@ -84,7 +115,9 @@ async function fetchProductDetails(code) {
     console.error("Errore API:", e);
   }
 
-  return { name: "Prodotto", image: null };
+  // 3) Non trovato → chiedi nome
+  const name = prompt("Nome del prodotto?");
+  return { name: name || "Prodotto", image: null };
 }
 
 async function scanLoop() {
@@ -97,7 +130,6 @@ async function scanLoop() {
       const code = barcodes[0].rawValue;
 
       if (!items.find(i => i.code === code)) {
-
         const details = await fetchProductDetails(code);
 
         items.push({
@@ -108,6 +140,7 @@ async function scanLoop() {
 
         saveList();
         renderList();
+        showToast(`${details.name} aggiunto`);
         navigator.vibrate?.(100);
       }
     }
