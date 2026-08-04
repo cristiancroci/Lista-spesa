@@ -6,13 +6,16 @@
   <title>Lista Spesa Scanner</title>
 
   <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
   <h1>Lista Spesa</h1>
+
   <button id="scanBtn">Scansiona codice</button>
-  <video id="video" autoplay playsinline></video>
+
+  <!-- QUESTO È FONDAMENTALE -->
+  <video id="video" autoplay playsinline style="width:100%; max-width:400px;"></video>
+
   <div id="list"></div>
 
   <script src="app.js"></script>
